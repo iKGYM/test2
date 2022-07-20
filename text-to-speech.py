@@ -6,7 +6,7 @@ import streamlit as st
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'secret.json'
 
-def synthesize_speech(text, lang, gender, pit, sprate):
+def synthesize_speech(text, lang, gender, vname, pit, sprate):
     """Synthesizes speech from the input string of text or ssml.
     Make sure to be working in a virtual environment.
 
@@ -21,9 +21,28 @@ def synthesize_speech(text, lang, gender, pit, sprate):
     }
 
     lang_code = {
-        '英語': 'en-US',
+        'アメリカ英語': 'en-US',
         '日本語': 'ja-JP'
-    }    
+    }
+    
+    voice_name = {
+        '日本語-Standard-A': 'ja-JP-Standard-A',
+        '日本語-Standard-B': 'ja-JP-Standard-B',
+        '日本語-Standard-C': 'ja-JP-Standard-C',
+        '日本語-Standard-D': 'ja-JP-Standard-D',
+        'アメリカ英語-Standard-A': 'en-US-Standard-A',
+        'アメリカ英語-Standard-B': 'en-US-Standard-B',
+        'アメリカ英語-Standard-C': 'en-US-Standard-C',
+        'アメリカ英語-Standard-D': 'en-US-Standard-D',
+        'アメリカ英語-Standard-E': 'en-US-Standard-E',
+        'アメリカ英語-Standard-F': 'en-US-Standard-F',
+        'アメリカ英語-Standard-G': 'en-US-Standard-G', 
+        'アメリカ英語-Standard-H': 'en-US-Standard-H',
+        'アメリカ英語-Standard-I': 'en-US-Standard-I',
+        'アメリカ英語-Standard-J': 'en-US-Standard-J',
+
+    }
+
     # Instantiates a client
     client = texttospeech.TextToSpeechClient()
 
@@ -32,8 +51,14 @@ def synthesize_speech(text, lang, gender, pit, sprate):
 
     # Build the voice request, select the language code ("en-US") and the ssml
     # voice gender ("neutral")
-    voice = texttospeech.VoiceSelectionParams(
-        language_code=lang_code[lang], ssml_gender=gender_type[gender])
+    if vname is not None:
+        voice = texttospeech.VoiceSelectionParams(
+            language_code=lang_code[lang], 
+            ssml_gender=gender_type[gender], name=voice_name[vname])
+    else:
+        voice = texttospeech.VoiceSelectionParams(
+            language_code=lang_code[lang], 
+            ssml_gender=gender_type[gender])
 
     # Select the type of audio file you want returned
     audio_config = texttospeech.AudioConfig(
@@ -78,7 +103,7 @@ st.sidebar.write("""
 lang = '日本語'
 lang = st.sidebar.selectbox(
     '言語を選択してください。',
-    ('日本語', '英語')
+    ('日本語', 'アメリカ英語')
 )
 
 st.sidebar.write("""
@@ -89,6 +114,31 @@ gender = st.sidebar.selectbox(
     '話者の性別を選択してください',
     ('male', 'female', 'neutral')
 )
+vname = None
+if lang == '日本語' and gender == 'female':
+    vname = st.sidebar.selectbox(
+        '音声タイプを選択してください。',
+        ('日本語-Standard-A', '日本語-Standard-B')
+    )
+elif lang == '日本語' and gender == 'male':
+    vname = st.sidebar.selectbox(
+        '音声タイプを選択してください。',
+        ('日本語-Standard-C', '日本語-Standard-D')
+    )
+elif lang == 'アメリカ英語' and gender == 'female':
+    vname = st.sidebar.selectbox(
+        '音声タイプを選択してください。',
+        ('アメリカ英語-Standard-C', 'アメリカ英語-Standard-E', 
+        'アメリカ英語-Standard-F', 'アメリカ英語-Standard-G',
+        'アメリカ英語-Standard-H')
+    )
+elif lang == 'アメリカ英語' and gender == 'male':
+    vname = st.sidebar.selectbox(
+        '音声タイプを選択してください。',
+        ('アメリカ英語-Standard-A', 'アメリカ英語-Standard-B', 
+        'アメリカ英語-Standard-D', 'アメリカ英語-Standard-I',
+        'アメリカ英語-Standard-J')
+    )
 
 st.sidebar.write("""
 ## ピッチの指定
@@ -114,8 +164,19 @@ if input_data is not None:
     if st.button('開始'):
         comment = st.empty()
         comment.write('音声出力を開始します')
-        response = synthesize_speech(input_data, lang, gender, pit, sprate)
+        response = synthesize_speech(input_data, lang, gender, vname, pit, sprate)
         st.audio(response.audio_content)
         comment.write('完了しました')
+    #button = st.button('音声ファイルをダウンロード')
+    #if button:
+    
+        st.markdown('### 音声ファイルをダウンロード')
+        st.write('※ファイル名は拡張子.mp3まで入れてください。')
+        st.download_button(
+            label='ダウンロード',
+            data=response.audio_content
+            #file_name=output_file
+        )
 else:
     st.error('テキストが入力されていません。')
+
