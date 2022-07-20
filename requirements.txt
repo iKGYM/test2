@@ -2,4 +2,4 @@ streamlit==1.10.0
 pandas==1.4.3
 numpy==1.23.1
 yfinance==0.1.74
-texttospeech
+google-cloud-texttospeech==2.12.0
